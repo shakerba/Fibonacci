@@ -1,0 +1,59 @@
+set -eu
+
+export GINKGO_DEFAULT_EVENTUALLY=${GINKGO_DEFAULT_EVENTUALLY:-5s}
+
+# Force the code to get built and installed with and without race
+go build -race github.com/pex/fibonacci/cmd/fibonacci
+go build github.com/pex/fibonacci/cmd/fibonacci
+
+# No coverage unless COVERAGE_DIR is set
+COVERAGE_DIR=${COVERAGE_DIR:-""}
+
+SKIP_PACKAGES=${SKIP_PACKAGES:-""}
+EXIT_CODE=0
+
+extra_args=( )
+[ -n "${COVERAGE_DIR}" ] && extra_args+=( -cover -covermode atomic )
+[ -x "$(command -v nproc)" ] && extra_args+=( -nodes $(( $(nproc)<16?$(nproc):16 )) )
+
+DIAG_TEST_CONFIG_DIR=/tmp/testconfig
+rm -rf $DIAG_TEST_CONFIG_DIR
+mkdir $DIAG_TEST_CONFIG_DIR
+echo -n error > $DIAG_TEST_CONFIG_DIR/DiagnosticError
+echo -n true > $DIAG_TEST_CONFIG_DIR/DiagnosticTrue
+echo -n false > $DIAG_TEST_CONFIG_DIR/DiagnosticFalse
+
+echo -n 0 > $DIAG_TEST_CONFIG_DIR/zeroCheckInterval
+echo -n 60 > $DIAG_TEST_CONFIG_DIR/EndpointCheckInterval
+
+if [ ${#extra_args[@]} -gt 0 ]; then
+    ginkgo -r -p -keepGoing -randomizeAllSpecs -progress -timeout=1h0m0s  --race -skipPackage=${SKIP_PACKAGES} "${extra_args[@]}" "$@"
+else
+    ginkgo -r -p -keepGoing -randomizeAllSpecs -progress -timeout=1h0m0s  --race -skipPackage=${SKIP_PACKAGES} "$@"
+fi
+((EXIT_CODE += $?)) || :
+rm -rf /tmp/testconfig
+
+if [ -n "${COVERAGE_DIR}" ]; then
+    mkdir -p "${COVERAGE_DIR}"
+    echo 'mode: atomic' > "${COVERAGE_DIR}/cover.out"
+    for profile in $(find . -name '*.coverprofile'); do
+        tail -n +2 ${profile} >> "${COVERAGE_DIR}/cover.out"
+        echo '' >> "${COVERAGE_DIR}/cover.out"
+        rm -f ${profile}
+    done
+    go tool cover -func <(cat "${COVERAGE_DIR}/cover.out" | grep -v '/main.go:') > "${COVERAGE_DIR}/report.txt"
+    go get github.com/axw/gocov/...
+    go get github.com/yaoyaozong/gocov-xml
+    gocov convert ${COVERAGE_DIR}/cover.out | gocov-xml > ${COVERAGE_DIR}/coverage.xml
+    rm -rf ${COVERAGE_DIR}/junit
+    mkdir ${COVERAGE_DIR}/junit
+    for f in `find . -name junit.xml`; do name="${f//\.\//__}"; fileName="${name//\//_}" ; echo "Copying $f as $fileName"; cp -- "$f" "${COVERAGE_DIR}/junit/$fileName"; done
+fi
+
+# Always remove residual JUnit reporter files.
+for f in `find . -name junit.xml`; do
+    rm "$f";
+done
+
+exit $EXIT_CODE
