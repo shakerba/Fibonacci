@@ -16,20 +16,19 @@ func (PreviousHandler *RouteHandler) GetPrevious(c *gin.Context) {
 		Err: nil,
 	}
 
+config.Lock.Lock()
+
 if config.A != 0 {
-	config.Lock.Lock()
 	config.C = config.B
 	config.B = config.A
 	config.A = config.C - config.B
-	config.Lock.Unlock()
-}
-
-if config.B == 1 && config.C == 1 {
+} else if config.B == 1 && config.C == 1 {
 	config.A = 0
 	config.B = 0
 	config.C = 0
 	resp.Number = config.A
 }
+config.Lock.Unlock()
 
 	c.JSON(http.StatusOK, resp)
 }

@@ -4,10 +4,12 @@ import(
   "sync"
 )
 
+const MAX = 12200160415121876738 // 93rd term of fibonnaci after this there is over flow from uint64
+
 var (
-  A int = 0
-  B int = 0
-  C int = 0
+  A uint64 = 0
+  B uint64 = 0
+  C uint64 = 0
 
  Lock sync.Mutex = sync.Mutex{}
 )

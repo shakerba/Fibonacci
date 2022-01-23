@@ -3,7 +3,7 @@ package models
 // swagger:model
 type CurrentResponse struct {
 	//current
-	Number int `json:"current"`
+	Number uint64 `json:"current"`
 
 	//error
 	Err error `json:"error,omitempty"`
@@ -13,7 +13,7 @@ type CurrentResponse struct {
 // swagger:model
 type NextResponse struct {
 	//current
-	Number int `json:"next"`
+	Number uint64 `json:"next"`
 
 	//error
 	Err error `json:"error,omitempty"`
@@ -23,7 +23,7 @@ type NextResponse struct {
 // swagger:model
 type PreviousResponse struct {
 	//current
-	Number int `json:"previous"`
+	Number uint64 `json:"previous"`
 
 	//error
 	Err error `json:"error,omitempty"`

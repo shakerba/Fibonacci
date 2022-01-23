@@ -18,10 +18,13 @@ if config.B == 0 {
 	config.C = 1
 
 	resp.Number = config.C
-} else {
+} else if config.C < config.MAX{
 	config.A = config.B
 	config.B = config.C
 	config.C = config.A + config.B
+} else{
+	config.C = config.MAX
+	config.B = config.MAX
 }
 
 config.Lock.Unlock()
