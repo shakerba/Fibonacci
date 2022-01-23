@@ -9,4 +9,4 @@
    `curl https://localhost:<port>/previous` returns `200` response with the previous number
 4. Use `ps` to get the process id of the server, and perform `kill -9 <process id>` to end the server (Other codes will cause the server to restart)
 
-Note: a fibonacci term below 0 or above the 93rd term will not change: previous, current, and next as there is no negative terms of the sequence, and above the 93rd term results in overflow from uint64 as its capped at 2^64 - 1
+Note: a fibonacci term below the 1st term or above the 93rd term will not change: previous, current, and next as there is no terms before the first, and above the 93rd term results in overflow from uint64 as its capped at 2^64 - 1
